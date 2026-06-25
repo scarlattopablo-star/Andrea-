@@ -838,9 +838,11 @@ function applyBgFilters() {
   if (!bgImageNode) return;
   bgImageNode.opacity(bgOpacity);
   if (posterize) {
-    bgImageNode.cache();
+    bgImageNode.cache({ pixelRatio: 1 });
+    // Posterize + leve saturación para un look de mapa con colores planos.
+    // levels bajo = pocos niveles de color = efecto bien marcado.
     bgImageNode.filters([Konva.Filters.Posterize]);
-    bgImageNode.levels(0.18);
+    bgImageNode.levels(0.045);
   } else {
     bgImageNode.filters([]);
     bgImageNode.clearCache();
