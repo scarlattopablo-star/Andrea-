@@ -436,17 +436,31 @@ function toast(msg) {
 }
 
 // ---------- Grilla y piso ----------
+// Orden de capas en bgLayer (de abajo hacia arriba): piso → imagen de fondo → grilla
+function reorderBg() {
+  const floor = bgLayer.findOne(".venueFloor");
+  const grid = bgLayer.findOne(".gridGroup");
+  if (floor) floor.moveToBottom();
+  if (bgImageNode) { bgImageNode.moveToBottom(); if (floor) floor.moveToBottom(); }
+  if (grid) grid.moveToTop();
+  bgLayer.draw();
+}
+
 function drawVenue() {
-  bgLayer.findOne(".venueGroup")?.destroy();
-  const g = new Konva.Group({ name: "venueGroup", listening: false });
+  bgLayer.findOne(".venueFloor")?.destroy();
+  bgLayer.findOne(".gridGroup")?.destroy();
   const wpx = mToPx(venueW), hpx = mToPx(venueH);
 
-  // Piso del recinto
-  g.add(new Konva.Rect({
-    x: 0, y: 0, width: wpx, height: hpx,
+  // Piso del recinto (nodo propio, va al fondo de todo)
+  bgLayer.add(new Konva.Rect({
+    name: "venueFloor", x: 0, y: 0, width: wpx, height: hpx,
     fill: "#101016", stroke: "#3a3a48", strokeWidth: 2,
     shadowColor: "#000", shadowBlur: 30, shadowOpacity: .5,
+    listening: false,
   }));
+
+  // Grilla y etiquetas (grupo transparente, va por encima de la imagen de fondo)
+  const g = new Konva.Group({ name: "gridGroup", listening: false });
 
   // Grilla: líneas cada 1 m
   for (let x = 0; x <= venueW; x++) {
@@ -473,9 +487,7 @@ function drawVenue() {
     g.add(new Konva.Text({ x: -22, y: mToPx(y)-5, text: y+"m", fontSize: 10, fill: "#5a5a66" }));
   }
   bgLayer.add(g);
-  g.moveToBottom();
-  if (bgImageNode) bgImageNode.moveToBottom();
-  bgLayer.draw();
+  reorderBg();
 }
 
 // ---------- Crear elemento ----------
@@ -817,10 +829,8 @@ function loadBgImage() {
       opacity: bgOpacity, listening: false,
     });
     bgLayer.add(bgImageNode);
-    drawVenue();
     applyBgFilters();
-    bgImageNode.moveToBottom();
-    bgLayer.draw();
+    reorderBg();
   };
   img.src = bgDataURL;
 }
